@@ -1,0 +1,105 @@
+/*
+ * Copyright 2015 Netflix, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+buildscript {
+    repositories {
+        jcenter()
+        maven { url 'http://spinnaker.bintray.com/gradle/' }
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+    dependencies {
+        classpath "com.netflix.spinnaker.gradle:spinnaker-dev-plugin:5.2.2"
+    }
+}
+
+allprojects {
+    apply plugin: "spinnaker.base-project"
+    apply plugin: "groovy"
+    apply plugin: 'jacoco'
+    group = "com.netflix.spinnaker.echo"
+
+    ext {
+        spinnakerDependenciesVersion = '1.17.0'
+        if (project.hasProperty('spinnakerDependenciesVersion')) {
+            spinnakerDependenciesVersion = project.property('spinnakerDependenciesVersion')
+        }
+    }
+
+    def checkLocalVersions = [spinnakerDependenciesVersion: spinnakerDependenciesVersion]
+    if (ext.has('versions')) {
+        def extVers = ext.get('versions')
+        if (extVers instanceof Map) {
+            checkLocalVersions.putAll(extVers)
+        }
+    }
+
+    def localVersions = checkLocalVersions.findAll { it.value.endsWith('-SNAPSHOT') }
+    if (localVersions) {
+        logger.info("Enabling mavenLocal repo for $localVersions")
+        repositories {
+            mavenLocal()
+        }
+    }
+
+    spinnaker {
+        dependenciesVersion = spinnakerDependenciesVersion
+    }
+
+    test {
+      testLogging {
+        exceptionFormat = 'full'
+      }
+    }
+
+    configurations.all {
+        exclude group: 'org.mortbay.jetty', module: 'servlet-api'
+        exclude group: 'javax.servlet', module: 'servlet-api'
+        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+        exclude group: 'org.slf4j', module: 'slf4j-simple'
+        resolutionStrategy {
+            force 'com.google.guava:guava:20.0'
+        }
+    }
+
+    tasks.withType(JavaExec) {
+      if (System.getProperty('DEBUG', 'false') == 'true') {
+        jvmArgs '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=7109'
+      }
+    }
+}
+
+subprojects {
+    jacoco {
+        toolVersion = '0.8.1'
+    }
+
+    dependencies {
+        compile spinnaker.dependency('groovy')
+        compile spinnaker.dependency('guava')
+        compile spinnaker.dependency('slf4j')
+        testCompile spinnaker.dependency('spock')
+        testRuntime spinnaker.dependency('slf4jSimple')
+        testRuntime "org.slf4j:jcl-over-slf4j:${spinnaker.version('slf4j')}"
+    }
+
+    project.plugins.withType(JavaBasePlugin) {
+      JavaPluginConvention convention = project.convention.getPlugin(JavaPluginConvention)
+      convention.sourceCompatibility = JavaVersion.VERSION_1_8
+      convention.targetCompatibility = JavaVersion.VERSION_1_8
+    }
+}
+
+defaultTasks ':echo-web:run'

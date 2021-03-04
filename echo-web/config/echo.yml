@@ -1,0 +1,79 @@
+server:
+  port: 8089
+
+mail:
+  enabled: true
+  from: codeploy
+spring:
+  mail:
+    host: 
+    username: codeploy
+    password: 
+    default-encoding: UTF-8
+    port: 25
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: false
+        transport:
+          protocol: smtp
+
+spinnaker:
+  cassandra:
+    cluster: 'spinnaker'
+    keyspace: 'echo'
+  baseUrl: 'http://ip:9000'
+
+front50:
+  baseUrl: 'http://ip:8080'
+
+orca:
+  baseUrl: 'http://ip:8083'
+
+search:
+  index: 'event_history'
+
+management.health.mail.enabled: false
+
+spring.freemarker.enabled: false
+artifacts:
+  bitbucket:
+    enabled: false
+    accounts: []
+  gcs:
+    enabled: false
+    accounts: []
+  oracle:
+    enabled: false
+    accounts: []
+  github:
+    enabled: true
+    accounts:
+    - name: yejingtao
+      tokenFile: token
+  gitlab:
+    enabled: true
+    accounts:
+    - name: jingtao
+      tokenFile: gitlab_token
+  http:
+    enabled: false
+    accounts: []
+  helm:
+    enabled: false
+    accounts: []
+  s3:
+    enabled: false
+    accounts: []
+  maven:
+    enabled: false
+    accounts: []
+  templates: []
+
+
+webhooks:
+  artifacts:
+    enabled: false
+    sources: []
