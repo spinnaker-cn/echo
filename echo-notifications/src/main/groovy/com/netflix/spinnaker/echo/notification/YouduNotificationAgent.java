@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.netflix.spinnaker.echo.model.Event;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -14,7 +15,8 @@ import java.util.Map;
 public class YouduNotificationAgent extends AbstractEventNotificationAgent{
   @Autowired
   RestTemplate restTemplate;
-
+  @Value("${youdu.url:http://10.100.129.133:9000/youdu/sendText}")
+  private String messageUrl;
 
   @Override
   public String getNotificationType() {
@@ -59,15 +61,10 @@ public class YouduNotificationAgent extends AbstractEventNotificationAgent{
   }
 
   public boolean send(String users, String message) {
-    String youduSendUrl="http://10.100.129.133:9000/youdu/sendMessage";
+    String youduSendUrl=messageUrl+"?toUsers="+users+"&message="+message;
     try {
       String url = youduSendUrl;
-      JSONObject requestJson=new JSONObject();
-
-      requestJson.put("toUsers", users);
-      requestJson.put("message", message);
-      JSONObject resultJson = restTemplate.postForObject(url, requestJson, JSONObject.class);
-      String result = resultJson.getString("result");
+      String result = restTemplate.postForObject(url, null, String.class);
       if ("Ok".equals(result)) {
         return true;
       }
